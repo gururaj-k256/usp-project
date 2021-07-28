@@ -11,7 +11,7 @@
 #define USER_NOT_READY -1
 #define FILLED 0
 
-// shared buffer structure
+// SHARED buffer structure
 typedef struct buffer
 {
     char data[BUFFER_SIZE];
@@ -23,7 +23,8 @@ typedef struct buffer
 Buffer *shared_memory_ptr;
 
 // USER-1 signal handler function
-// if signal is from SIGUSR1, waits for message from SIGUSR2
+// if signal is for SIGUSR1, from SIGUSR2 
+// displays message from SIGUSR2 to SIGUSR1
 void user1_sig_handler(int signal_id)
 {
     if (signal_id == SIGUSR1)
@@ -55,14 +56,15 @@ int main()
     shared_memory_ptr->user1_pid = getpid();
     shared_memory_ptr->user_status = USER_NOT_READY;
 
-    // USER-1 sends the signal to USER-2
+    // listening for any signals from SIGUSR2
+    // USER-1 catches the kill signal sent from USER-2
     signal(SIGUSR1, user1_sig_handler);
 
     // if USER-1 is not ready, infinite loop
-    // if ready, sleep for a second
+    // if USER-1 is ready, sleep for a second, send control to SIGUSR2
     //      accept the USER-1 message from std input
-    //      update USER-1 status  
-    //      USER-1 sends a KILL signal to USER-2 saying it has sent sent a message   
+    //      update USER-1 status, saying it has filled buffer  
+    //      USER-1 sends a KILL signal to USER-2 implying it has sent sent a message   
     while (1)
     {
         while (shared_memory_ptr->user_status != USER_READY)
