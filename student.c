@@ -16,8 +16,8 @@ typedef struct buffer
 {
     char data[BUFFER_SIZE];
     int user_status;
-    int user1_pid;
-    int user2_pid;
+    int student_pid;
+    int teacher_pid;
 } Buffer;
 
 Buffer *shared_memory_ptr;
@@ -25,11 +25,11 @@ Buffer *shared_memory_ptr;
 // USER-1 signal handler function
 // if signal is for SIGUSR1, from SIGUSR2 
 // displays message from SIGUSR2 to SIGUSR1
-void user1_sig_handler(int signal_id)
+void student_sig_handler(int signal_id)
 {
     if (signal_id == SIGUSR1)
     {
-        printf("User 2: ");
+        printf("Teacher: ");
         puts(shared_memory_ptr->data);
         
         // after this point,
@@ -53,12 +53,12 @@ int main()
     
     // USER-1 pid & status info
     // initially, user is not ready
-    shared_memory_ptr->user1_pid = getpid();
+    shared_memory_ptr->student_pid = getpid();
     shared_memory_ptr->user_status = USER_NOT_READY;
 
     // listening for any signals from SIGUSR2
     // USER-1 catches the kill signal sent from USER-2
-    signal(SIGUSR1, user1_sig_handler);
+    signal(SIGUSR1, student_sig_handler);
 
     // if USER-1 is not ready, infinite loop
     // if USER-1 is ready, sleep for a second, send control to SIGUSR2
@@ -72,12 +72,12 @@ int main()
 
         sleep(1);
 
-        printf("User 1: ");
+        printf("Student: ");
         fgets(shared_memory_ptr->data, BUFFER_SIZE, stdin);
 
         shared_memory_ptr->user_status = FILLED;
 
-        kill(shared_memory_ptr->user2_pid, SIGUSR2);
+        kill(shared_memory_ptr->teacher_pid, SIGUSR2);
     }
 
     // detach shared memory segment
