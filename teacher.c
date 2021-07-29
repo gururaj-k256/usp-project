@@ -15,8 +15,8 @@ typedef struct buffer
 {
     char data[BUFFER_SIZE];
     int user_status;
-    int user1_pid;
-    int user2_pid;
+    int student_pid;
+    int teacher_pid;
 } Buffer;
 
 Buffer *shared_memory_ptr;
@@ -24,11 +24,11 @@ Buffer *shared_memory_ptr;
 // USER-2 signal handler function
 // if signal is for SIGUSR2, from SIGUSR1 
 // displays message from SIGUSR1 to SIGUSR2
-void user2_sig_handler(int signal_id)
+void teacher_sig_handler(int signal_id)
 {
     if (signal_id == SIGUSR2)
     {
-        printf("User 1: ");
+        printf("Student: ");
         puts(shared_memory_ptr->data);
     }
 }
@@ -47,19 +47,19 @@ int main()
     //      shmaddr : OS will automatically choose the address.
     shared_memory_ptr = (Buffer *)shmat(shared_memory_id, NULL, 0);
 
-    shared_memory_ptr->user2_pid = getpid();
+    shared_memory_ptr->teacher_pid = getpid();
     shared_memory_ptr->user_status = USER_NOT_READY;
 
     // listening for any signals from SIGUSR1
     // USER-2 catches the kill signal sent from USER-1
-    signal(SIGUSR2, user2_sig_handler);
+    signal(SIGUSR2, teacher_sig_handler);
 
     while (1)
     {
         sleep(1);
 
         // starts the communication first
-        printf("User 2: ");
+        printf("Teacher: ");
         // pointer to data, number of chars to copy, file stream: stdin by default
         fgets(shared_memory_ptr->data, BUFFER_SIZE, stdin);
 
@@ -69,7 +69,7 @@ int main()
 
         // sends signal to SIGUSR1
         // sayign SIGUSR2 is ready
-        kill(shared_memory_ptr->user1_pid, SIGUSR1);
+        kill(shared_memory_ptr->student_pid, SIGUSR1);
 
         while (shared_memory_ptr->user_status == USER_READY)
             continue;
